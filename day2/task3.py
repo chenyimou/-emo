@@ -1,5 +1,6 @@
 import os
 import csv
+import re
 from pathlib import Path
 
 
@@ -33,7 +34,20 @@ def match_images_to_names(image_folder, name_file_path, output_csv, rename_image
         print(f"警告: 图片数量({len(image_files)})和名字数量({len(names)})不匹配!")
         return
 
-    # 4. 保持图片原始顺序(按创建时间或其他系统默认顺序)
+    # 4. 按文件名从左到右自然排序图片
+    def natural_sort_key(s):
+        """实现特定排序规则：数字按自然排序，但带前导零的数字排在相同值的数字之前"""
+        def convert(text):
+            if text.isdigit():
+                num_val = int(text)
+                # 如果是以0开头的数字，返回一个特殊的元组使其排在普通数字之前
+                if text.startswith('0') and len(text) > 1:
+                    return (num_val - 0.5, text)
+                return (num_val, text)
+            return text.lower()
+        return [convert(p) for p in re.split('([0-9]+)', s)]
+
+    image_files = sorted(image_files, key=natural_sort_key)
 
     # 5. 创建对应关系
     mapping = []
